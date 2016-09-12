@@ -1,0 +1,24 @@
+e strict;
+use warnings;
+use v5.10;
+
+my $all = q(*** all destinations ***);
+
+my %traffic;
+while(<>) {
+    my($src,$dst,$bytes) = split;
+    $traffic{$src}{$dst} += $bytes;
+    $traffic{$src}{$all} += $bytes;
+}
+
+my @sources = sort { $traffic{$b}{$all} <=> $traffic{$a}{$all} } keys %traffic;
+
+for my $src (@sources) {
+    say "$src: $traffic{$src}{$all}";
+    for my $dst (sort { $traffic{$src}{$b} <=> $traffic{$src}{$a} } keys
+%{$traffic{$src}}) {
+        next if $dst eq $all;
+        say "  $dst: $traffic{$src}{$dst}";
+    }
+}
+
