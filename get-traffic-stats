@@ -1,15 +1,44 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -s
 use strict;
 use warnings;
 use v5.10;
+use autodie;
+use Storable;
 
+our $h;
+
+if ($h) {
+	print <<"EOF";
+$0 [options]
+
+Show traffic statistics
+
+  options:
+  -h brief help message
+  -a accumulate and show accumulated statistics
+EOF
+	exit;
+}
+
+my $data_file = "$0.dat";
 my $all = q(*** all destinations ***);
-
 my %traffic;
+
+# read stored logs
+if ($a and -e $data_file) {
+	my $hashref = retrieve $data_file;
+	%traffic = %$hashref;
+}
+
 while(<>) {
     my($src,$dst,$bytes) = split;
     $traffic{$src}{$dst} += $bytes;
     $traffic{$src}{$all} += $bytes;
+}
+
+# store logs
+if ($a) {
+	store \%traffic, $data_file;
 }
 
 my @sources = sort { $traffic{$b}{$all} <=> $traffic{$a}{$all} } keys %traffic;
@@ -22,4 +51,3 @@ for my $src (@sources) {
         say "  $dst: $traffic{$src}{$dst}";
     }
 }
-
